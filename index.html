@@ -1,327 +1,246 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useSpring, useTransform, useMotionValue } from 'framer-motion';
-import { 
-  Menu, 
-  X, 
-  Diamond
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>EVO — Páginas de Alta Performance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-// --- COMPONENTES UI DE ALTA PERFORMANCE ---
+  <!-- Fonte -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
 
-const MagneticButton = ({ children, className = "", strength = 30 }) => {
-  const ref = useRef(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+  <style>
+    :root {
+      --bg: #050505;
+      --text: #e5e5e5;
+      --muted: #888;
+      --silver: #d1d1d1;
+    }
 
-  const handleMouseMove = (e) => {
-    const { clientX, clientY } = e;
-    const { height, width, left, top } = ref.current.getBoundingClientRect();
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
-    x.set((clientX - centerX) / (width / strength));
-    y.set((clientY - centerY) / (height / strength));
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  const springConfig = { stiffness: 150, damping: 15, mass: 0.1 };
-  const springX = useSpring(x, springConfig);
-  const springY = useSpring(y, springConfig);
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ x: springX, y: springY }}
-      className={`relative cursor-pointer ${className}`}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-const StaggerText = ({ text, className = "", delay = 0 }) => {
-  const words = text.split(" ");
-  return (
-    <div className={`overflow-visible flex flex-wrap gap-x-2 md:gap-x-3 gap-y-0 justify-center ${className}`}>
-      {words.map((word, i) => (
-        <span key={i} className="inline-block overflow-visible py-0.5"> 
-          <motion.span
-            initial={{ y: "100%", opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ 
-              duration: 0.8, 
-              delay: delay + (i * 0.03), 
-              ease: [0.33, 1, 0.68, 1] 
-            }}
-            className="inline-block"
-          >
-            {word}
-          </motion.span>
-        </span>
-      ))}
-    </div>
-  );
-};
-
-// --- COMPONENTE: Ticker (Esteira) ---
-const Ticker = () => {
-  const words = ["Evolução", "Visibilidade", "Objetivo"];
-  const repeatedWords = [...words, ...words, ...words, ...words];
-
-  return (
-    <div className="relative w-full py-10 overflow-hidden bg-[#050505] border-y border-white/5 select-none">
-      <motion.div 
-        className="flex whitespace-nowrap gap-16 md:gap-24"
-        animate={{ x: [0, -1000] }}
-        transition={{ 
-          duration: 25, 
-          repeat: Infinity, 
-          ease: "linear" 
-        }}
-      >
-        {repeatedWords.map((word, i) => (
-          <div key={i} className="flex items-center gap-16 md:gap-24">
-            <span className="text-3xl md:text-5xl font-serif italic lowercase text-white/40 hover:text-white transition-colors duration-500 cursor-default">
-              {word}
-            </span>
-            <Diamond size={12} className="text-white/10 fill-white/10" />
-          </div>
-        ))}
-      </motion.div>
-      <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#050505] to-transparent z-10" />
-      <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#050505] to-transparent z-10" />
-    </div>
-  );
-};
-
-const App = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const containerRef = useRef(null);
-  const manifestoRef = useRef(null);
-
-  // URLs das imagens
-  const mainLogoUrl = "https://lh3.googleusercontent.com/u/0/d/1v-IsTEkTs4LCkMdBOGxj9qprI0NrjmJ6=w1000?authuser=0";
-  const floatingAssetUrl = "https://lh3.googleusercontent.com/u/0/d/10mr7DE6YubKn3t_kGocGrF09j7Gay3BX=w1000?authuser=0";
-  const manifestoImageUrl = "https://lh3.googleusercontent.com/u/0/d/1OBKITPttGmuATnZk_1O1MWzz4_0aDVkk=w1000?authuser=0";
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
-
-  const { scrollYProgress: manifestoScroll } = useScroll({
-    target: manifestoRef,
-    offset: ["start end", "end start"]
-  });
-
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  const opacityHero = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
-  const yHero = useTransform(scrollYProgress, [0, 1], [0, 100]);
-  const xAsset = useTransform(scrollYProgress, [0, 1], [0, 50]);
-  
-  const yManifestoParallax = useTransform(manifestoScroll, [0, 1], [-40, 40]);
-
-  useEffect(() => {
-    // Ativa o logo no cabeçalho quando o usuário rolar 120px para baixo
-    const handleScroll = () => setScrolled(window.scrollY > 120);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-[#050505] text-[#e5e5e5] font-sans selection:bg-silver/30 overflow-x-hidden relative">
-      
-      {/* Efeito de Ruído de Fundo */}
-      <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.02] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-
-      {/* Barra de Progresso */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/40 to-transparent z-[100] origin-left"
-        style={{ scaleX }}
-      />
-
-      {/* Navegação - Logo da Hero acompanha o scroll com tamanho harmônico */}
-      <nav className={`fixed w-full z-50 transition-all duration-700 ${scrolled ? 'bg-black/80 backdrop-blur-2xl border-b border-white/5 py-2' : 'bg-transparent py-6'}`}>
-        <div className="max-w-7xl mx-auto px-8 flex justify-center items-center h-8 md:h-10">
-          <AnimatePresence>
-            {scrolled && (
-              <motion.div
-                initial={{ opacity: 0, y: -15, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.9 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center"
-              >
-                <img 
-                  src={mainLogoUrl} 
-                  alt="Evo Logo Sticky" 
-                  className="h-6 md:h-7 w-auto object-contain cursor-pointer opacity-90 hover:opacity-100 transition-opacity"
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section ref={containerRef} className="relative h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-        <motion.div 
-          style={{ x: xAsset, opacity: opacityHero }}
-          className="absolute right-[-8%] top-[25%] w-[55%] max-w-[900px] h-auto pointer-events-none select-none z-0"
-        >
-          <motion.div
-            animate={{ y: [0, -30, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-full h-auto"
-          >
-            <div className="absolute top-0 left-1/4 right-1/4 h-1/2 bg-white/5 blur-[120px] rounded-full opacity-40" />
-            <img 
-              src={floatingAssetUrl}
-              alt="Evo Asset"
-              className="w-full h-auto opacity-40"
-            />
-          </motion.div>
-        </motion.div>
-
-        <motion.div 
-          style={{ y: yHero, opacity: opacityHero }}
-          className="max-w-7xl mx-auto text-center z-10 flex flex-col items-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-10"
-          >
-            {/* Logo principal da Hero */}
-            <img src={mainLogoUrl} alt="Evo Logo Hero" className="w-20 md:w-28 h-auto object-contain" />
-          </motion.div>
-
-          <div className="relative px-4">
-            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.05] uppercase">
-              <span className="block"><StaggerText text="Páginas de Alta" delay={0.4} /></span>
-              <span className="block"><StaggerText text="Performance" delay={0.5} /></span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 block">
-                 <StaggerText text="que Transformam" delay={0.6} />
-              </span>
-              <span className="text-white italic font-serif lowercase block">
-                <StaggerText text="cliques em lucro real" delay={0.8} />
-              </span>
-            </h1>
-          </div>
-          
-          <motion.p className="text-gray-500 text-[10px] md:text-sm max-w-lg mx-auto mt-10 opacity-80">
-            Arquiteturas de Vendas que elevam a sua presença digital.
-          </motion.p>
-          
-          <div className="pt-10">
-            <MagneticButton strength={40}>
-              <a href="#contacto" className="px-9 py-4 bg-white text-black font-black rounded-full uppercase text-[8px] md:text-[9px] tracking-[0.2em]">
-                Consultoria Estratégica
-              </a>
-            </MagneticButton>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Esteira (Ticker) entre sessões */}
-      <Ticker />
-
-      {/* Manifesto */}
-      <section id="processo" ref={manifestoRef} className="py-40 bg-[#050505] relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-12 md:gap-20 items-center justify-center">
-          
-          <motion.div 
-            style={{ y: yManifestoParallax }}
-            className="relative flex justify-center md:justify-end"
-          >
-            <div className="relative w-full max-w-[420px]">
-              <div className="absolute inset-0 bg-white/[0.03] blur-[80px] -z-10 rounded-full scale-110" />
-              
-              <motion.div 
-                className="relative z-10 overflow-hidden"
-                animate={{ 
-                  y: [0, -20, 0],
-                  rotate: [0, 0.5, 0]
-                }}
-                transition={{ 
-                  duration: 8, 
-                  repeat: Infinity, 
-                  ease: "easeInOut" 
-                }}
-              >
-                <img 
-                  src={manifestoImageUrl}
-                  alt="Manifesto Evo"
-                  className="w-full h-auto block opacity-100"
-                />
-              </motion.div>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            className="space-y-8 text-center md:text-left flex flex-col items-center md:items-start max-w-md mx-auto md:mx-0"
-          >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter text-white leading-tight">
-              Sua Marca Merece <br />
-              <span className="italic lowercase font-serif border-b border-white/10 silver-shimmer">Evolução de Luxo.</span>
-            </h2>
-            <p className="text-lg md:text-xl text-gray-500 leading-relaxed font-medium">
-              Não criamos apenas interfaces; esculpimos <span className="text-white italic">patrimónios digitais</span> de alto impacto.
-            </p>
-            <div className="flex gap-4 pt-4 opacity-30">
-               {[1,2,3].map(i => <Diamond key={i} size={14} className="text-white fill-white" />)}
-            </div>
-          </motion.div>
-          
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-24 border-t border-white/5 text-center flex flex-col items-center gap-10">
-        <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="cursor-pointer"
-        >
-          <img 
-            src={mainLogoUrl} 
-            alt="Evo Logo Footer" 
-            className="w-20 md:w-24 h-auto object-contain"
-          />
-        </motion.div>
-        <p className="text-[8px] text-gray-700 font-bold uppercase tracking-[0.4em]">© 2026 Agência evo. – O Padrão Ouro do Digital</p>
-      </footer>
-    </div>
-  );
-};
-
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&display=swap');
-    :root { --silver: #d1d1d1; }
-    .font-serif { font-family: 'Playfair Display', serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { background-color: #050505; margin: 0; }
-    
-    .silver-shimmer {
-      background: linear-gradient(90deg, #666 0%, #fff 50%, #666 100%);
-      background-size: 200% auto;
-      color: transparent;
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ---------------- NAV ---------------- */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 24px;
+      text-align: center;
+      z-index: 100;
+      transition: all .6s ease;
+    }
+    nav.scrolled {
+      background: rgba(0,0,0,.8);
+      backdrop-filter: blur(12px);
+      padding: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    nav img {
+      height: 28px;
+      cursor: pointer;
+      opacity: .9;
+    }
+
+    /* ---------------- HERO ---------------- */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px 20px;
+      position: relative;
+    }
+
+    .hero-logo {
+      width: 110px;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .italic {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      text-transform: lowercase;
+    }
+
+    .gradient {
+      background: linear-gradient(to bottom, #fff, #777);
       -webkit-background-clip: text;
-      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 480px;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 16px 36px;
+      background: white;
+      color: black;
+      border-radius: 999px;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 9px;
+      letter-spacing: .25em;
+      text-decoration: none;
+      transition: transform .3s ease;
+    }
+    .btn:hover { transform: scale(1.05); }
+
+    /* ---------------- TICKER ---------------- */
+    .ticker {
+      overflow: hidden;
+      border-top: 1px solid rgba(255,255,255,.05);
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      padding: 40px 0;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 80px;
+      animation: ticker 25s linear infinite;
+      white-space: nowrap;
+    }
+
+    .ticker span {
+      font-size: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      color: rgba(255,255,255,.35);
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* ---------------- MANIFESTO ---------------- */
+    .manifesto {
+      padding: 160px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 80px;
+      max-width: 1200px;
+      margin: auto;
+      align-items: center;
+    }
+
+    .manifesto img {
+      width: 100%;
+      max-width: 420px;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .silver-shimmer {
+      background: linear-gradient(90deg,#666,#fff,#666);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      color: transparent;
       animation: shine 6s linear infinite;
     }
 
-    @keyframes shine { to { background-position: 200% center; } }
-  `;
-  document.head.appendChild(style);
-}
+    @keyframes shine {
+      to { background-position: 200%; }
+    }
 
-export default App;
+    /* ---------------- FOOTER ---------------- */
+    footer {
+      padding: 120px 20px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      text-align: center;
+    }
+
+    footer img {
+      width: 90px;
+      margin-bottom: 24px;
+    }
+
+    footer p {
+      font-size: 9px;
+      letter-spacing: .4em;
+      color: #555;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav id="nav">
+  <img src="https://lh3.googleusercontent.com/u/0/d/1v-IsTEkTs4LCkMdBOGxj9qprI0NrjmJ6=w1000" alt="EVO Logo">
+</nav>
+
+<section class="hero">
+  <img class="hero-logo" src="https://lh3.googleusercontent.com/u/0/d/1v-IsTEkTs4LCkMdBOGxj9qprI0NrjmJ6=w1000">
+  <h1>
+    Páginas de Alta<br>
+    Performance<br>
+    <span class="gradient">que Transformam</span><br>
+    <span class="italic">cliques em lucro real</span>
+  </h1>
+  <p>Arquiteturas de Vendas que elevam a sua presença digital.</p>
+  <a href="#" class="btn">Consultoria Estratégica</a>
+</section>
+
+<section class="ticker">
+  <div class="ticker-track">
+    <span>Evolução</span>
+    <span>Visibilidade</span>
+    <span>Objetivo</span>
+    <span>Evolução</span>
+    <span>Visibilidade</span>
+    <span>Objetivo</span>
+  </div>
+</section>
+
+<section class="manifesto">
+  <img src="https://lh3.googleusercontent.com/u/0/d/1OBKITPttGmuATnZk_1O1MWzz4_0aDVkk=w1000">
+  <div>
+    <h2 style="font-size:3rem; font-weight:900; text-transform:uppercase;">
+      Sua Marca Merece<br>
+      <span class="italic silver-shimmer">Evolução de Luxo.</span>
+    </h2>
+    <p style="margin-top:24px; font-size:1.1rem; color:#888;">
+      Não criamos apenas interfaces; esculpimos patrimónios digitais de alto impacto.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <img src="https://lh3.googleusercontent.com/u/0/d/1v-IsTEkTs4LCkMdBOGxj9qprI0NrjmJ6=w1000">
+  <p>© 2026 Agência evo — O Padrão Ouro do Digital</p>
+</footer>
+
+<script>
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 120);
+  });
+</script>
+
+</body>
+</html>
